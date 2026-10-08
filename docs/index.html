@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Treine conversação em inglês por voz com o Gemini: conversa sem pausas, tradução em português e caderno de vocabulário.">
+  <title>English Talk</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231f7a63'/%3E%3Cpath d='M9 13h2v6H9zm4-3h2v12h-2zm4 2h2v8h-2zm4 1h2v6h-2z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="help-full" data-status="idle">
+  <div class="app">
+    <main class="stage">
+      <header class="top">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <h1>English Talk</h1>
+        </div>
+        <span class="status" id="status" data-state="idle">Desconectado</span>
+        <button class="ghost menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="side">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          Menu
+        </button>
+      </header>
+
+      <div class="banner" id="banner" role="alert" hidden>
+        <span id="bannerText"></span>
+        <button type="button" class="banner-action" id="bannerAction" hidden></button>
+        <button type="button" id="bannerClose" aria-label="Fechar aviso">×</button>
+      </div>
+
+      <section class="transcript" id="transcript" aria-live="polite">
+        <div class="empty" id="empty">
+          <h2>Converse em inglês, sem pausas.</h2>
+          <p class="lead">O Sam fala inglês e traduz tudo para o português na tela.</p>
+          <form class="key-step" id="keyStep" autocomplete="off">
+            <label for="quickKey">Para começar, cole sua chave do Gemini</label>
+            <div class="key-row">
+              <input id="quickKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…">
+              <button class="primary" type="submit">Salvar</button>
+            </div>
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Criar uma chave grátis</a>
+          </form>
+          <p class="ready-step" id="readyStep" hidden>Toque no botão verde e fale. Use fones de ouvido.</p>
+          <button class="link" id="openGuide" type="button">Como funciona</button>
+        </div>
+      </section>
+
+      <footer class="dock">
+        <div class="controls-bar">
+          <div class="seg-group">
+            <span class="seg-label">Conversa</span>
+            <div class="seg" role="group" aria-label="Estilo de conversa">
+              <button type="button" data-seg="inputMode" data-value="auto" aria-pressed="true" title="O Sam percebe quando você para de falar">Automático</button>
+              <button type="button" data-seg="inputMode" data-value="manual" aria-pressed="false" title="Você clica para falar e clica de novo para enviar">Manual</button>
+            </div>
+          </div>
+          <div class="seg-group">
+            <span class="seg-label">Sam fala</span>
+            <div class="seg" role="group" aria-label="Idioma do tutor">
+              <button type="button" data-seg="tutorLang" data-value="en" aria-pressed="true">Inglês</button>
+              <button type="button" data-seg="tutorLang" data-value="pt" aria-pressed="false" title="O Sam fala português e você responde em inglês">Português</button>
+            </div>
+          </div>
+          <div class="seg-group">
+            <span class="seg-label">Tradução</span>
+            <div class="seg" role="group" aria-label="Tradução para o português">
+              <button type="button" data-seg="help" data-value="off" aria-pressed="false" title="Sem tradução (também não salva vocabulário)">Off</button>
+              <button type="button" data-seg="help" data-value="tap" aria-pressed="false" title="Toque nos termos sublinhados para ver o significado">Toque</button>
+              <button type="button" data-seg="help" data-value="terms" aria-pressed="false" title="Significado sempre visível acima de cada termo">Termos</button>
+              <button type="button" data-seg="help" data-value="full" aria-pressed="true" title="Termos e a frase inteira traduzida">Tudo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="orb-row">
+          <button class="orb" id="orb" type="button" data-state="idle" data-icon="mic" aria-label="Começar conversa">
+            <svg class="icon-mic" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+            <svg class="icon-stop" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          </button>
+          <p class="orb-hint" id="orbHint">Toque para começar</p>
+        </div>
+
+        <div class="dock-tools live-only">
+          <form class="text-form" id="textForm" autocomplete="off">
+            <input id="textInput" type="text" placeholder="…ou escreva aqui" disabled>
+            <button class="ghost" id="sendBtn" type="submit" disabled>Enviar</button>
+          </form>
+          <div class="toggles">
+            <button class="chip" id="muteBtn" type="button" aria-pressed="false" disabled>Mutar microfone</button>
+            <button class="chip" id="suggestBtn" type="button" disabled title="Pede ideias de resposta para a última fala do Sam">Sugerir resposta</button>
+            <button class="chip" id="hideBtn" type="button" aria-pressed="false" title="Treine a escuta: o texto do Sam fica desfocado até você passar o mouse ou tocar nele">Esconder texto do Sam</button>
+            <button class="chip danger" id="endBtn" type="button" hidden>Encerrar conversa</button>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <div class="scrim" id="scrim" hidden></div>
+
+    <aside class="drawer" id="side" aria-label="Menu" inert>
+      <div class="drawer-head">
+        <div class="tabs" role="tablist" aria-label="Seções do menu">
+          <button type="button" role="tab" id="tab-guide" data-tab="guide" aria-selected="true" aria-controls="panel-guide">Guia</button>
+          <button type="button" role="tab" id="tab-settings" data-tab="settings" aria-selected="false" aria-controls="panel-settings" tabindex="-1">Ajustes</button>
+          <button type="button" role="tab" id="tab-vocab" data-tab="vocab" aria-selected="false" aria-controls="panel-vocab" tabindex="-1">Caderno <span class="count" id="vocabCount">0</span></button>
+        </div>
+        <button type="button" class="icon-btn" id="drawerClose" aria-label="Fechar menu">×</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- ============ GUIA ============ -->
+        <section role="tabpanel" id="panel-guide" aria-labelledby="tab-guide" data-panel="guide" class="guide">
+          <h2>Primeiros passos</h2>
+          <ol class="steps">
+            <li>Cole sua chave do Gemini (<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">grátis aqui</a>). Ela fica só no seu navegador.</li>
+            <li>Toque no botão verde e libere o microfone.</li>
+            <li>Fale. O Sam responde em inglês e traduz para o português na tela.</li>
+          </ol>
+          <p class="tip">Funciona melhor com fones de ouvido e no Chrome ou Edge.</p>
+
+          <details open>
+            <summary>Controles da conversa</summary>
+            <dl>
+              <dt>Conversa: Automático</dt>
+              <dd>O Sam percebe quando você parou de falar e responde. Dá para interrompê-lo falando por cima.</dd>
+              <dt>Conversa: Manual</dt>
+              <dd>Você clica no botão para começar a falar e clica de novo para enviar, com todo o tempo para montar a frase. Atalho: tecla Espaço.</dd>
+              <dt>Sam fala: Inglês</dt>
+              <dd>O Sam fala inglês. Travou? Pergunte ou diga em português, que ele te dá o inglês e a conversa continua.</dd>
+              <dt>Sam fala: Português</dt>
+              <dd>O Sam pergunta em português e você responde em inglês. Aparecem cartões com sugestões de resposta.</dd>
+              <dt>Tradução: Off</dt>
+              <dd>Sem tradução. O vocabulário também deixa de ser salvo.</dd>
+              <dt>Tradução: Toque</dt>
+              <dd>Termos sublinhados; toque em um para ver o significado.</dd>
+              <dt>Tradução: Termos</dt>
+              <dd>O significado de cada termo fica visível acima dele.</dd>
+              <dt>Tradução: Tudo</dt>
+              <dd>Termos mais a tradução da frase inteira (padrão).</dd>
+            </dl>
+            <p class="note">Estilo e idioma podem ser trocados no meio da conversa: o app reconecta em cerca de 1 segundo e o Sam não perde o fio.</p>
+          </details>
+
+          <details>
+            <summary>Durante a conversa</summary>
+            <dl>
+              <dt>Botão de voz</dt>
+              <dd>No Automático encerra a conversa. No Manual começa e envia a sua fala (e interrompe o Sam, se ele estiver falando).</dd>
+              <dt>Escrever</dt>
+              <dd>Campo de texto para digitar em vez de falar, em inglês ou português.</dd>
+              <dt>Mutar microfone</dt>
+              <dd>Pausa o seu microfone sem encerrar (só no Automático).</dd>
+              <dt>Sugerir resposta</dt>
+              <dd>Mostra ideias de resposta, com tradução e botão para ouvir, para a última fala do Sam.</dd>
+              <dt>Esconder texto do Sam</dt>
+              <dd>Deixa o texto desfocado para treinar só a escuta. Passe o mouse (ou toque no balão, no celular) para revelar.</dd>
+              <dt>Encerrar conversa</dt>
+              <dd>Desconecta. O texto da conversa continua na tela.</dd>
+            </dl>
+            <p class="note">O Sam sempre fecha a fala com uma pergunta, para você ter o que responder.</p>
+          </details>
+
+          <details>
+            <summary>Caderno de vocabulário</summary>
+            <p>Quando você pergunta “como se diz…?” ou o Sam ensina um termo, ele entra sozinho na aba Caderno. O Sam também reaproveita essas palavras na conversa para você revisar. Dá para baixar a lista em .tsv (importa no Anki) ou limpar.</p>
+          </details>
+
+          <details>
+            <summary>Ajustes</summary>
+            <dl>
+              <dt>Nível</dt>
+              <dd>De A2 a C1: define a dificuldade do vocabulário e das perguntas.</dd>
+              <dt>Assunto</dt>
+              <dd>Papo livre, dia a dia, tópicos de otimização combinatória ou carreira (apresentar pesquisa, entrevista, perguntas de conferência).</dd>
+              <dt>Atividade</dt>
+              <dd>Conversa livre, jogos e desafios, quiz de vocabulário ou debate.</dd>
+              <dt>Tom e velocidade</dt>
+              <dd>Divertido, calmo ou profissional; fala natural ou mais devagar.</dd>
+              <dt>Correções</dt>
+              <dd>Nenhuma, sutil (o Sam repete certo sem parar a conversa) ou ativa.</dd>
+              <dt>Quanto o Sam espera eu pensar</dt>
+              <dd>No Automático, define quanto silêncio o Sam espera antes de responder.</dd>
+              <dt>Voz</dt>
+              <dd>30 vozes. O botão Ouvir toca uma amostra antes de você escolher.</dd>
+              <dt>Estou sem fones</dt>
+              <dd>Evita o eco do alto-falante, mas o Sam não pode ser interrompido.</dd>
+              <dt>Avançado</dt>
+              <dd>Modelos do Gemini, voz expressiva (experimental) e sessões longas.</dd>
+            </dl>
+            <p class="note">Mudanças valem na próxima conversa; o botão “Aplicar agora” reinicia a conexão para aplicá-las já.</p>
+          </details>
+
+          <details>
+            <summary>Dúvidas, problemas e privacidade</summary>
+            <dl>
+              <dt>Sem som ou o Sam se interrompe sozinho</dt>
+              <dd>Use fones de ouvido ou marque “Estou sem fones”.</dd>
+              <dt>Microfone bloqueado</dt>
+              <dd>Libere o microfone no cadeado da barra de endereço. Enquanto isso dá para conversar por texto.</dd>
+              <dt>Aviso vermelho ou amarelo</dt>
+              <dd>Mostra o motivo devolvido pelo Google. Em Ajustes, o Registro técnico guarda o histórico da conexão e tem um botão para copiá-lo.</dd>
+              <dt>Privacidade</dt>
+              <dd>Sua chave fica só neste navegador e é enviada apenas ao Google. O áudio e o texto vão direto do seu navegador para o Gemini; não existe servidor intermediário.</dd>
+              <dt>Custo</dt>
+              <dd>O uso é cobrado ou limitado conforme o plano da sua chave do Google AI Studio.</dd>
+            </dl>
+          </details>
+        </section>
+
+        <!-- ============ AJUSTES ============ -->
+        <section role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" data-panel="settings" hidden class="panel">
+          <label class="field">
+            <span>Chave da API do Gemini</span>
+            <div class="key-row">
+              <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…">
+              <button class="ghost small" id="keyToggle" type="button">Mostrar</button>
+              <button class="ghost small" id="keyClear" type="button" title="Apaga a chave deste navegador">Apagar</button>
+            </div>
+            <small>Fica só neste navegador. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Criar chave grátis</a></small>
+          </label>
+          <label class="field">
+            <span>Nível de inglês</span>
+            <select id="level"></select>
+          </label>
+          <label class="field">
+            <span>Assunto</span>
+            <select id="topic"></select>
+          </label>
+          <label class="field">
+            <span>Atividade</span>
+            <select id="activity"></select>
+          </label>
+          <label class="field">
+            <span>Tom do Sam</span>
+            <select id="vibe"></select>
+          </label>
+          <label class="field">
+            <span>Velocidade da fala</span>
+            <select id="pace"></select>
+          </label>
+          <label class="field">
+            <span>Correções</span>
+            <select id="corrections"></select>
+          </label>
+          <label class="field" id="patienceField">
+            <span>Quanto o Sam espera eu pensar</span>
+            <select id="patience"></select>
+          </label>
+          <div class="field">
+            <label for="voice">Voz</label>
+            <div class="key-row">
+              <select id="voice"></select>
+              <button class="ghost small" id="voicePreview" type="button">Ouvir</button>
+            </div>
+          </div>
+          <label class="check">
+            <input id="speakerMode" type="checkbox">
+            <span>Estou sem fones (o Sam não pode ser interrompido)</span>
+          </label>
+          <details class="advanced">
+            <summary>Avançado</summary>
+            <label class="field">
+              <span>Modelo de voz (conversa)</span>
+              <input id="model" list="modelList" spellcheck="false">
+              <datalist id="modelList"></datalist>
+            </label>
+            <label class="field">
+              <span>Modelo de apoio (tradução e sugestões)</span>
+              <input id="coachModel" list="coachList" spellcheck="false">
+              <datalist id="coachList"></datalist>
+            </label>
+            <label class="check">
+              <input id="affective" type="checkbox">
+              <span>Voz mais expressiva (experimental)</span>
+            </label>
+            <label class="check">
+              <input id="longSession" type="checkbox">
+              <span>Sessões longas (renova a conexão a cada ~15 min)</span>
+            </label>
+          </details>
+          <button class="ghost" id="applyNow" type="button" hidden>Aplicar agora (reinicia a conexão)</button>
+          <p class="note" id="applyNote">Mudanças valem na próxima conversa.</p>
+
+          <details class="log-panel">
+            <summary>Registro técnico</summary>
+            <div class="row">
+              <button class="ghost small" id="logCopy" type="button">Copiar registro</button>
+            </div>
+            <pre id="log"></pre>
+          </details>
+        </section>
+
+        <!-- ============ CADERNO ============ -->
+        <section role="tabpanel" id="panel-vocab" aria-labelledby="tab-vocab" data-panel="vocab" hidden class="panel">
+          <ul class="vocab" id="vocabList"></ul>
+          <p class="note" id="vocabEmpty">As palavras que você perguntar (“como se diz…”) aparecem aqui sozinhas.</p>
+          <div class="row">
+            <button class="ghost small" id="vocabExport" type="button">Baixar (.tsv)</button>
+            <button class="ghost small" id="vocabClear" type="button">Limpar</button>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

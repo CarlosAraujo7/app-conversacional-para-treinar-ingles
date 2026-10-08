@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# Nunca versionar chaves: o app guarda a chave só no navegador de quem usa.
+.env
+*.key
