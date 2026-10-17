@@ -26,24 +26,11 @@
           <h1>English Talk</h1>
         </div>
         <span class="status" id="status" data-state="idle">Desconectado</span>
-        <button class="streak" id="streakBtn" type="button" title="Sua sequência de dias praticando" aria-label="Sequência de dias praticando">
-          <span class="streak-icon" id="streakBadgeIcon"></span>
-          <span id="streakBadge">0</span>
-        </button>
-        <button class="ghost menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="side" aria-label="Menu">
+        <button class="ghost menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="side">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-          <span class="menu-label">Menu</span>
+          Menu
         </button>
       </header>
-
-      <div class="hud live-only" id="hud">
-        <span class="hud-time" id="hudTime" title="Tempo desta conversa">0:00</span>
-        <div class="hud-talk" title="Quanto cada um falou nesta conversa. Tente chegar a 50%.">
-          <span class="hud-label" id="hudYou">Você 0%</span>
-          <div class="talk" id="hudBar"><span class="talk-you"></span><span class="talk-sam"></span></div>
-          <span class="hud-label" id="hudSam">Sam 0%</span>
-        </div>
-      </div>
 
       <div class="banner" id="banner" role="alert" hidden>
         <span id="bannerText"></span>
@@ -53,7 +40,7 @@
 
       <section class="transcript" id="transcript" aria-live="polite">
         <div class="empty" id="empty">
-          <div class="hero" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="hero-bot" id="heroBot"></div>
           <h2>Converse em inglês, sem pausas.</h2>
           <p class="lead">O Sam fala inglês e traduz tudo para o português na tela.</p>
           <form class="key-step" id="keyStep" autocomplete="off">
@@ -64,32 +51,7 @@
             </div>
             <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Criar uma chave grátis</a>
           </form>
-
-          <div class="home" id="home" hidden>
-            <div class="home-today">
-              <div id="homeRing"></div>
-              <div class="today-info">
-                <h3 id="homeTitle">Hoje</h3>
-                <p id="homeLine"></p>
-              </div>
-            </div>
-            <div class="quick">
-              <div class="quick-row">
-                <span class="seg-label">Nível</span>
-                <div class="seg" id="homeLevel" role="group" aria-label="Nível de inglês"></div>
-              </div>
-              <div class="quick-row">
-                <span class="seg-label">Assunto</span>
-                <select id="homeTopic" aria-label="Assunto"></select>
-              </div>
-              <div class="quick-row">
-                <span class="seg-label">Atividade</span>
-                <div class="seg" id="homeActivity" role="group" aria-label="Atividade"></div>
-              </div>
-            </div>
-            <button class="ghost review-cta" id="homeReview" type="button" hidden></button>
-            <p class="ready-step" id="readyStep">Toque no botão verde e fale. Use fones de ouvido.</p>
-          </div>
+          <p class="ready-step" id="readyStep" hidden>Toque no robô e fale. Use fones de ouvido.</p>
           <button class="link" id="openGuide" type="button">Como funciona</button>
         </div>
       </section>
@@ -122,10 +84,16 @@
         </div>
 
         <div class="orb-row">
-          <button class="orb" id="orb" type="button" data-state="idle" data-icon="mic" aria-label="Começar conversa">
-            <svg class="icon-mic" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-            <svg class="icon-stop" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-          </button>
+          <div class="orb-stage" id="orbStage" data-state="idle">
+            <canvas class="wave" id="wave" aria-hidden="true"></canvas>
+            <button class="orb" id="orb" type="button" data-icon="mic" aria-label="Começar conversa">
+              <span id="dockBot"></span>
+              <span class="orb-badge" aria-hidden="true">
+                <svg class="icon-mic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+                <svg class="icon-stop" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              </span>
+            </button>
+          </div>
           <p class="orb-hint" id="orbHint">Toque para começar</p>
         </div>
 
@@ -150,9 +118,8 @@
       <div class="drawer-head">
         <div class="tabs" role="tablist" aria-label="Seções do menu">
           <button type="button" role="tab" id="tab-guide" data-tab="guide" aria-selected="true" aria-controls="panel-guide">Guia</button>
-          <button type="button" role="tab" id="tab-progress" data-tab="progress" aria-selected="false" aria-controls="panel-progress" tabindex="-1">Progresso</button>
-          <button type="button" role="tab" id="tab-vocab" data-tab="vocab" aria-selected="false" aria-controls="panel-vocab" tabindex="-1">Caderno <span class="count" id="vocabCount">0</span></button>
           <button type="button" role="tab" id="tab-settings" data-tab="settings" aria-selected="false" aria-controls="panel-settings" tabindex="-1">Ajustes</button>
+          <button type="button" role="tab" id="tab-vocab" data-tab="vocab" aria-selected="false" aria-controls="panel-vocab" tabindex="-1">Caderno <span class="count" id="vocabCount">0</span></button>
         </div>
         <button type="button" class="icon-btn" id="drawerClose" aria-label="Fechar menu">×</button>
       </div>
@@ -163,7 +130,7 @@
           <h2>Primeiros passos</h2>
           <ol class="steps">
             <li>Cole sua chave do Gemini (<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">grátis aqui</a>). Ela fica só no seu navegador.</li>
-            <li>Toque no botão verde e libere o microfone.</li>
+            <li>Toque no robô e libere o microfone.</li>
             <li>Fale. O Sam responde em inglês e traduz para o português na tela.</li>
           </ol>
           <p class="tip">Funciona melhor com fones de ouvido e no Chrome ou Edge.</p>
@@ -211,37 +178,32 @@
           </details>
 
           <details>
+            <summary>O robô e as ondas</summary>
+            <dl>
+              <dt>O rosto do Sam</dt>
+              <dd>O robô embaixo da conversa é o botão de falar. Os olhos seguem o seu dedo ou o mouse, a boca mexe com a voz do Sam e a expressão muda: ouvindo, falando, pensando, mudo ou com erro. Parado por um tempo, ele cochila.</dd>
+              <dt>As ondas de som</dt>
+              <dd>As barras ao lado do robô sobem com a voz de verdade: azul quando o Sam fala, verde quando é você.</dd>
+              <dt>Cores</dt>
+              <dd>Verde: ouvindo você. Azul: o Sam falando. Vermelho: gravando (estilo Manual). Cinza: microfone mudo.</dd>
+            </dl>
+          </details>
+
+          <details>
             <summary>Estudar com a conversa</summary>
             <dl>
               <dt>Termos: toque para ouvir e salvar</dt>
-              <dd>Toque num termo sublinhado da fala do Sam: aparece o significado, um botão para ouvir a pronúncia e outro para guardar a palavra no caderno.</dd>
-              <dt>Ouvir de novo / Devagar</dt>
-              <dd>Embaixo de cada fala do Sam, toque para ouvir a fala dele outra vez, na voz dele, ou em velocidade mais lenta. O microfone fica em pausa enquanto toca.</dd>
+              <dd>Toque num termo sublinhado da fala do Sam para ver o significado, ouvir a pronúncia e guardar no caderno.</dd>
+              <dt>Ouvir de novo</dt>
+              <dd>No alto de cada fala do Sam há dois ícones: ouvir a fala de novo, na voz dele, ou mais devagar. O microfone fica em pausa enquanto toca.</dd>
               <dt>Correção das suas frases</dt>
-              <dd>Depois que você fala, um cartão mostra uma versão mais natural da sua frase, com o que mudou em destaque e uma explicação curta. Dá para ouvir a frase certa e salvá-la no caderno. “Soou natural” aparece quando não há nada a melhorar.</dd>
-              <dt>Barra no topo</dt>
-              <dd>Durante a conversa, mostra o tempo e quanto cada um falou. A meta é você falar pelo menos metade das palavras.</dd>
-              <dt>Resumo da conversa</dt>
-              <dd>Ao encerrar, o app mostra o tempo, quanto você falou, as palavras novas e as frases para melhorar.</dd>
+              <dd>Depois que você fala, aparece embaixo da sua fala “Soou natural” ou a frase corrigida, com as palavras que mudaram em destaque e uma explicação curta. Dá para desligar em Ajustes.</dd>
             </dl>
           </details>
 
           <details>
-            <summary>Caderno e revisão</summary>
-            <p>Quando você pergunta “como se diz…?”, o Sam ensina um termo ou você salva um termo ou uma frase corrigida, a palavra entra na aba Caderno. O Sam também reaproveita essas palavras na conversa para você revisar. Dá para baixar a lista em .tsv (importa no Anki) ou limpar.</p>
-            <dl>
-              <dt>Revisar</dt>
-              <dd>Cartões com repetição espaçada: você tenta lembrar, vira o cartão e marca Errei, Quase ou Acertei. As que você acerta voltam cada vez mais espaçadas (1, 3, 7, 14 e 30 dias); as que erra voltam amanhã. Atalhos: Espaço vira o cartão e 1, 2 e 3 dão a nota.</dd>
-              <dt>PT → EN e EN → PT</dt>
-              <dd>PT → EN mostra o português e você lembra (e diz em voz alta) o inglês, que é o que treina falar. EN → PT treina entender.</dd>
-              <dt>Pontinhos no caderno</dt>
-              <dd>Cada palavra tem de um a quatro pontos: nova, aprendendo, firme e dominada.</dd>
-            </dl>
-          </details>
-
-          <details>
-            <summary>Progresso e meta diária</summary>
-            <p>A aba Progresso mostra a meta do dia, a sequência de dias praticando (vale a partir de 1 minuto de conversa), os últimos 7 dias, o total de conversas e palavras, como está o caderno e os assuntos que você mais treinou. Tudo fica só neste navegador.</p>
+            <summary>Caderno de vocabulário</summary>
+            <p>Quando você pergunta “como se diz…?”, o Sam ensina um termo ou você salva um termo tocando nele, a palavra entra sozinha na aba Caderno. O Sam também reaproveita essas palavras na conversa para você revisar. Dá para baixar a lista em .tsv (importa no Anki) ou limpar.</p>
           </details>
 
           <details>
@@ -263,10 +225,8 @@
               <dd>30 vozes. O botão Ouvir toca uma amostra antes de você escolher.</dd>
               <dt>Estou sem fones</dt>
               <dd>Evita o eco do alto-falante, mas o Sam não pode ser interrompido.</dd>
-              <dt>Correções das minhas frases</dt>
-              <dd>Liga ou desliga o cartão de correção embaixo da sua fala (precisa da tradução ligada).</dd>
-              <dt>Aparência</dt>
-              <dd>Tema claro, escuro ou o do seu sistema, e três tamanhos de texto.</dd>
+              <dt>Correção das minhas frases e aparência</dt>
+              <dd>Liga ou desliga o cartão de correção (precisa da tradução ligada) e troca o tema (claro, escuro ou o do sistema) e o tamanho do texto.</dd>
               <dt>Avançado</dt>
               <dd>Modelos do Gemini, voz expressiva (experimental) e sessões longas.</dd>
             </dl>
@@ -288,54 +248,6 @@
               <dd>O uso é cobrado ou limitado conforme o plano da sua chave do Google AI Studio.</dd>
             </dl>
           </details>
-        </section>
-
-        <!-- ============ PROGRESSO ============ -->
-        <section role="tabpanel" id="panel-progress" aria-labelledby="tab-progress" data-panel="progress" hidden class="panel progress">
-          <div class="pcard goal-card">
-            <div id="goalRing"></div>
-            <div class="goal-info">
-              <h3>Meta de hoje</h3>
-              <p id="goalLine"></p>
-              <label class="goal-pick">Meta diária
-                <select id="goalMin"></select>
-              </label>
-            </div>
-          </div>
-
-          <div class="pcard streak-card" id="streakCard">
-            <span class="streak-icon" id="streakIcon"></span>
-            <div>
-              <strong id="streakNow"></strong>
-              <span class="note" id="streakBest"></span>
-            </div>
-          </div>
-
-          <div class="pcard">
-            <h3>Últimos 7 dias</h3>
-            <div class="week" id="weekChart"></div>
-            <p class="note" id="weekGoalNote"></p>
-          </div>
-
-          <div class="tiles" id="totalTiles"></div>
-
-          <div class="pcard">
-            <h3>Seu caderno</h3>
-            <p class="note" id="vocabStackEmpty">Ainda não há palavras. Elas entram sozinhas quando você pergunta “como se diz…?”.</p>
-            <div class="stack" id="vocabStack"></div>
-            <ul class="legend" id="vocabLegend"></ul>
-            <button class="ghost review-cta" id="progReview" type="button">
-              <span id="progReviewText">Revisar palavras</span>
-            </button>
-          </div>
-
-          <div class="pcard">
-            <h3>Assuntos mais treinados</h3>
-            <ul class="hbars" id="topicBars"></ul>
-            <p class="note" id="topicsEmpty">Quando você conversar, os assuntos aparecem aqui.</p>
-          </div>
-
-          <button class="ghost small" id="statsClear" type="button">Zerar progresso</button>
         </section>
 
         <!-- ============ AJUSTES ============ -->
@@ -390,11 +302,9 @@
           </label>
           <label class="check">
             <input id="feedback" type="checkbox">
-            <span>Mostrar correções das minhas frases (cartão abaixo da minha fala)</span>
+            <span>Mostrar a correção das minhas frases</span>
           </label>
-
-          <fieldset class="group">
-            <legend>Aparência</legend>
+          <div class="row">
             <label class="field">
               <span>Tema</span>
               <select id="theme"></select>
@@ -403,8 +313,7 @@
               <span>Tamanho do texto</span>
               <select id="textSize"></select>
             </label>
-          </fieldset>
-
+          </div>
           <details class="advanced">
             <summary>Avançado</summary>
             <label class="field">
@@ -440,13 +349,8 @@
 
         <!-- ============ CADERNO ============ -->
         <section role="tabpanel" id="panel-vocab" aria-labelledby="tab-vocab" data-panel="vocab" hidden class="panel">
-          <div class="vocab-top" id="vocabTop">
-            <button class="primary" id="vocabReview" type="button">Revisar</button>
-            <input id="vocabSearch" type="search" placeholder="Buscar no caderno" aria-label="Buscar no caderno" autocomplete="off">
-          </div>
           <ul class="vocab" id="vocabList"></ul>
-          <p class="note" id="vocabNoMatch" hidden>Nenhuma palavra encontrada.</p>
-          <p class="note" id="vocabEmpty">As palavras que você perguntar (“como se diz…”) aparecem aqui sozinhas. Você também pode tocar num termo sublinhado da conversa e salvar.</p>
+          <p class="note" id="vocabEmpty">As palavras que você perguntar (“como se diz…”) aparecem aqui sozinhas.</p>
           <div class="row">
             <button class="ghost small" id="vocabExport" type="button">Baixar (.tsv)</button>
             <button class="ghost small" id="vocabClear" type="button">Limpar</button>
@@ -455,9 +359,6 @@
       </div>
     </aside>
   </div>
-
-  <dialog class="modal" id="reviewDialog" aria-label="Revisar palavras"></dialog>
-  <dialog class="modal" id="summaryDialog" aria-label="Resumo da conversa"></dialog>
 
   <script type="module" src="app.js"></script>
 </body>

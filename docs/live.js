@@ -229,6 +229,15 @@ export class LiveClient {
     this.log('Resposta repetida detectada: áudio desse turno cortado');
   }
 
+  /** Espectro de frequências do áudio ('out' = voz do tutor, 'mic' = você), para desenhar as ondas. */
+  getSpectrum(source) {
+    const analyser = source === 'mic' ? this.micAnalyser : this.outAnalyser;
+    if (!analyser) return null;
+    if (!this.spectrum || this.spectrum.length !== analyser.frequencyBinCount) this.spectrum = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(this.spectrum);
+    return this.spectrum;
+  }
+
   getLevels() {
     if (!this.ctx) return { mic: 0, out: 0, speaking: false, talking: false, talkMs: 0 };
     return {

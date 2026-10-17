@@ -3,7 +3,7 @@
 import { displayText } from './transcript.js';
 import { segmentize } from './coach.js';
 import { diffWords } from './diff.js';
-import { el, icon, iconButton, speak, wordSpans } from './ui.js';
+import { el, icon, iconButton, textButton, speak, wordSpans } from './ui.js';
 
 const SLOW_RATE = 0.7;
 const EXAMPLE_MAX = 160;
@@ -15,8 +15,9 @@ function sentenceWith(text, term) {
 }
 
 /**
- * hooks: onSaveEntry({ en, pt, example }) -> true se foi salvo no caderno
+ * hooks: onSaveEntry({ en, pt, example }) -> guarda no caderno
  *        onReplay(turn, rate)               -> toca de novo a fala guardada do Sam
+ *        onReact(mood)                      -> o robô reage ('happy', 'hmm')
  */
 export function createView(root, hooks = {}) {
   const parts = new Map(); // turn.id -> elementos do balão
@@ -78,11 +79,13 @@ export function createView(root, hooks = {}) {
 
       if (turn.role === 'tutor') {
         article.tabIndex = 0; // no celular o toque dá foco, e o foco revela o texto escondido
+        const head = el('div', 'bubble-head');
+        p.actions = el('div', 'actions');
+        p.actions.hidden = true;
+        head.append(who, p.actions);
         p.translation = el('div', 'translation');
         p.translation.lang = 'pt-BR';
         p.suggest = el('div', 'suggest');
-        p.actions = el('div', 'actions');
-        p.actions.hidden = true;
         p.toggle = el('button', 'tr-btn', 'Traduzir');
         p.toggle.type = 'button';
         p.toggle.hidden = true;
@@ -90,7 +93,7 @@ export function createView(root, hooks = {}) {
           const on = article.classList.toggle('show-tr');
           p.toggle.textContent = on ? 'Ocultar tradução' : 'Traduzir';
         });
-        article.append(who, text, p.translation, p.toggle, p.actions, p.suggest, chips);
+        article.append(head, text, p.translation, p.toggle, p.suggest, chips);
       } else {
         p.feedback = el('div', 'feedback');
         article.append(who, text, p.feedback, chips);
@@ -126,10 +129,8 @@ export function createView(root, hooks = {}) {
           const card = el('div', 'card');
           const body = el('div', 'card-body');
           body.append(el('div', 'en', s.en), el('div', 'pt', s.pt));
-          const listen = el('button', 'speak');
-          listen.type = 'button';
+          const listen = textButton('volume', 'Ouvir', 'speak');
           listen.setAttribute('aria-label', `Ouvir: ${s.en}`);
-          listen.append(icon('volume', 14), el('span', '', 'Ouvir'));
           listen.addEventListener('click', () => speak(s.en));
           card.append(body, listen);
           p.suggest.append(card);
@@ -138,7 +139,7 @@ export function createView(root, hooks = {}) {
     });
   }
 
-  // Cartão logo abaixo da sua fala: o que ficou bom ou uma versão mais natural, com as mudanças em destaque.
+  // Abaixo da sua fala: "Soou natural" ou a frase corrigida, com o que mudou em destaque.
   function setFeedback(turn) {
     const p = parts.get(turn.id);
     const fb = turn.fb;
@@ -149,37 +150,26 @@ export function createView(root, hooks = {}) {
         const ok = el('span', 'fb-good');
         ok.append(icon('check', 14), el('span', '', 'Soou natural'));
         p.feedback.append(ok);
+        hooks.onReact?.('happy');
         return;
       }
       if (fb.verdict !== 'improve') return;
 
       const diff = diffWords(displayText(turn), fb.better);
-      const card = el('div', 'fb-card');
-      const listen = iconButton('volume', 'Ouvir');
+      const after = wordSpans(diff.after, 'fb-after');
+      const listen = iconButton('volume', 'Ouvir a frase certa');
       listen.addEventListener('click', () => speak(fb.better));
-      const save = iconButton('bookmark', 'Salvar no caderno');
-      save.addEventListener('click', () => {
-        if (!hooks.onSaveEntry?.({ en: fb.better, pt: fb.better_pt, example: '' })) return;
-        save.disabled = true;
-        save.replaceChildren(icon('check', 14), el('span', '', 'Salva no caderno'));
-      });
-      const actions = el('div', 'fb-actions');
-      actions.append(listen, save);
+      after.append(' ', listen);
 
-      card.append(
-        el('div', 'fb-title', 'Mais natural'),
-        wordSpans(diff.after, 'fb-after'),
-        el('div', 'fb-label', 'Você disse'),
-        wordSpans(diff.before, 'fb-before'),
-      );
-      if (fb.better_pt) card.append(el('div', 'fb-pt', fb.better_pt));
+      const card = el('div', 'fb-card');
+      card.append(wordSpans(diff.before, 'fb-before'), after);
       if (fb.tip) card.append(el('div', 'fb-tip', fb.tip));
-      card.append(actions);
       p.feedback.append(card);
+      hooks.onReact?.('hmm');
     });
   }
 
-  // Botões de ouvir a fala do Sam de novo (na voz dele, guardada na memória) e mais devagar.
+  // Botões no cabeçalho do balão: ouvir a fala do Sam de novo (na voz dele, guardada na memória) e mais devagar.
   function setReplay(turn) {
     const p = parts.get(turn.id);
     if (!p || !p.actions) return;
@@ -189,7 +179,7 @@ export function createView(root, hooks = {}) {
     const again = iconButton('volume', 'Ouvir de novo');
     again.dataset.rate = '1';
     again.addEventListener('click', () => hooks.onReplay?.(turn, 1));
-    const slow = iconButton('turtle', 'Devagar');
+    const slow = iconButton('slow', 'Ouvir mais devagar');
     slow.dataset.rate = String(SLOW_RATE);
     slow.addEventListener('click', () => hooks.onReplay?.(turn, SLOW_RATE));
     p.actions.append(again, slow);
@@ -249,12 +239,13 @@ export function createView(root, hooks = {}) {
     pop.replaceChildren();
     const head = el('div', 'pop-head');
     head.append(el('div', 'pop-en', en), el('div', 'pop-pt', pt));
-    const listen = iconButton('volume', 'Ouvir');
+    const listen = textButton('volume', 'Ouvir');
     listen.addEventListener('click', () => speak(en));
-    const save = iconButton('plus', 'Salvar no caderno');
+    const save = textButton('plus', 'Salvar no caderno');
     save.addEventListener('click', () => {
-      if (!hooks.onSaveEntry?.({ en, pt, example })) return;
+      hooks.onSaveEntry?.({ en, pt, example });
       addChip(turn, `Salvo no caderno: ${en}`);
+      hooks.onReact?.('happy');
       save.disabled = true;
       save.replaceChildren(icon('check', 14), el('span', '', 'Salvo'));
     });

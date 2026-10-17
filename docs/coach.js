@@ -14,7 +14,7 @@ Output fields:
 - terms: glosses for terms inside tutor_text, in order of appearance, never overlapping. "text" MUST be copied exactly (same spelling and case) from tutor_text. "meaning" is a short gloss (1 to 4 words) in the other language that fits THIS context, not a dictionary list. Treat idioms, phrasal verbs and fixed expressions as ONE term. Coverage by learner_level: A2 = almost every word; B1 = skip only trivial words (a, the, is, to, of, and, I, you); B2 = only words and phrases a B1 learner might not know; C1 = only uncommon words, idioms and technical terms. When tutor_language is "pt", gloss every content word the learner would need in order to answer in English (give the English equivalents).
 - vocab: 0 to 2 items for the learner's notebook. ONLY the term the learner asked about ("how do I say ...") or a term the tutor explicitly taught ("we say ...", "the word for that is ...", "in English: ..."). Never add words that merely appear in the sentence. Fields: english, portuguese, example (a short English sentence). Otherwise [].
 - suggestions: when want_suggestions is true or tutor_language is "pt": 2 or 3 short English replies the learner could say to the tutor's last question or comment, at learner_level, each with its Portuguese meaning in "pt", varied in length and stance; for optimization topics make them technically sensible. Otherwise [].
-- feedback: when want_feedback is false, always {verdict "skip"} with empty strings. Otherwise an assessment of learner_last ONLY (what the learner said just before this tutor line). learner_last comes from speech recognition, so IGNORE punctuation, capitalization and tiny transcription glitches. verdict is one of: "skip" when learner_last is empty, is Portuguese, is a single word or a bare yes/no, or cannot be judged; "good" when the English is correct and natural enough for learner_level; "improve" when there is a real grammar, word-choice or naturalness problem worth fixing. For "improve" only: better = the corrected, natural version of learner_last that keeps the learner's meaning and level, changing as little as possible; better_pt = Brazilian Portuguese translation of better; tip = one or two short sentences in Brazilian Portuguese naming the main problem and why the new version is better. For "good" and "skip" leave better, better_pt and tip as empty strings.`;
+- feedback: when want_feedback is false, always {verdict "skip"} with empty strings. Otherwise an assessment of learner_last ONLY (what the learner said just before this tutor line). learner_last comes from speech recognition, so IGNORE punctuation, capitalization and tiny transcription glitches. verdict is one of: "skip" when learner_last is empty, is Portuguese, is a single word or a bare yes/no, or cannot be judged; "good" when the English is correct and natural enough for learner_level; "improve" when there is a real grammar, word-choice or naturalness problem worth fixing. For "improve" only: better = the corrected, natural version of learner_last that keeps the learner's meaning and level, changing as little as possible; tip = one or two short sentences in Brazilian Portuguese naming the main problem and why the new version is better. For "good" and "skip" leave better and tip as empty strings.`;
 
 const SCHEMA = {
   type: 'OBJECT',
@@ -41,10 +41,9 @@ const SCHEMA = {
       properties: {
         verdict: { type: 'STRING' },
         better: { type: 'STRING' },
-        better_pt: { type: 'STRING' },
         tip: { type: 'STRING' },
       },
-      required: ['verdict', 'better', 'better_pt', 'tip'],
+      required: ['verdict', 'better', 'tip'],
     },
   },
   required: ['translation', 'terms', 'vocab', 'suggestions', 'feedback'],
@@ -96,9 +95,9 @@ function sanitizeFeedback(raw) {
   const fb = raw && typeof raw === 'object' ? raw : {};
   const verdict = str(fb.verdict).toLowerCase();
   const better = str(fb.better);
-  if (verdict === 'good') return { verdict: 'good', better: '', better_pt: '', tip: '' };
-  if (verdict === 'improve' && better) return { verdict: 'improve', better, better_pt: str(fb.better_pt), tip: str(fb.tip) };
-  return { verdict: 'skip', better: '', better_pt: '', tip: '' };
+  if (verdict === 'good') return { verdict: 'good', better: '', tip: '' };
+  if (verdict === 'improve' && better) return { verdict: 'improve', better, tip: str(fb.tip) };
+  return { verdict: 'skip', better: '', tip: '' };
 }
 
 function sanitize(raw) {
