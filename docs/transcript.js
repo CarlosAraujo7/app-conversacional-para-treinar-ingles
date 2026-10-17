@@ -258,13 +258,19 @@ export class Conversation {
       .map((t) => ({ role: t.role, text: displayText(t).slice(0, maxChars) }));
   }
 
-  /** O que você disse por último antes de um turno do tutor. */
-  learnerBefore(turn) {
+  /** O turno seu mais recente antes de um turno do tutor (ou undefined). */
+  learnerTurnBefore(turn) {
     const i = this.turns.indexOf(turn);
     for (let k = i - 1; k >= 0; k--) {
       const t = this.turns[k];
-      if (t.role === 'user' && !t.echo && t.text.trim()) return displayText(t);
+      if (t.role === 'user' && !t.echo && t.text.trim()) return t;
     }
-    return '';
+    return undefined;
+  }
+
+  /** O que você disse por último antes de um turno do tutor. */
+  learnerBefore(turn) {
+    const t = this.learnerTurnBefore(turn);
+    return t ? displayText(t) : '';
   }
 }

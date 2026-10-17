@@ -83,7 +83,7 @@ const KNOWN_CONTENT_KEYS = new Set(['modelTurn', 'inputTranscription', 'outputTr
 
 export class LiveClient {
   /**
-   * handlers: onStatus(status), onUserText(chunk), onTutorText(chunk), onTurnComplete(),
+   * handlers: onStatus(status), onUserText(chunk), onTutorText(chunk), onTurnAudio(chunks), onTurnComplete(),
    *           onInterrupted(), onNotice(msg), onError(msg, code), onLog(msg)
    * status: 'idle' | 'connecting' | 'live'
    */
@@ -97,6 +97,8 @@ export class LiveClient {
     this.talking = false;
     this.talkStart = 0;
     this.suppress = false;
+    this.hold = false; // microfone em espera enquanto você ouve uma fala de novo
+    this.turnAudio = []; // blocos de áudio da fala atual do tutor, entregues em onTurnAudio
     this.stat = { tx: 0, audio: 0 };
     this.seenKeys = new Set();
   }
@@ -132,6 +134,7 @@ export class LiveClient {
     this.attempts = [];
     this.talking = false;
     this.suppress = false;
+    this.turnAudio = [];
     this.stat = { tx: 0, audio: 0 };
   }
 
@@ -192,6 +195,11 @@ export class LiveClient {
 
   setSpeakerMode(on) {
     if (this.cfg) this.cfg.speakerMode = on;
+  }
+
+  /** Para de enviar o microfone enquanto o app toca uma fala guardada (senão o Sam ouviria o próprio replay). */
+  setHold(on) {
+    this.hold = on;
   }
 
   /** Estilo manual: começa a enviar sua fala. Falar por cima do tutor o interrompe. */
@@ -288,7 +296,7 @@ export class LiveClient {
   }
 
   canSendMic() {
-    if (!this.ws || !this.ws.ready) return false;
+    if (!this.ws || !this.ws.ready || this.hold) return false;
     if (this.cfg.manual) return this.talking; // só envia enquanto você estiver "gravando"
     if (this.muted) return false;
     // Com alto-falante (sem fones), o microfone captura a voz do tutor. Nesse modo, não
@@ -307,6 +315,7 @@ export class LiveClient {
     const bytes = fromBase64(b64);
     const n = bytes.length >> 1;
     if (!n) return;
+    this.turnAudio.push(bytes);
     const pcm = new Int16Array(bytes.buffer, 0, n);
     const buffer = this.ctx.createBuffer(1, n, OUT_RATE);
     const data = buffer.getChannelData(0);
@@ -483,6 +492,7 @@ export class LiveClient {
     if (sc.interrupted) {
       this.flushAudio();
       this.suppress = false;
+      this.turnAudio = []; // fala cortada: o que sobrou não corresponde ao texto, não vale guardar
       this.h.onInterrupted?.();
     }
     if (sc.inputTranscription && sc.inputTranscription.text) this.h.onUserText?.(sc.inputTranscription.text);
@@ -502,6 +512,9 @@ export class LiveClient {
       this.log(`Turno do tutor: ${this.stat.tx} trechos de texto, ${this.stat.audio} blocos de áudio`);
       this.stat = { tx: 0, audio: 0 };
       this.suppress = false;
+      const audio = this.turnAudio;
+      this.turnAudio = [];
+      if (audio.length) this.h.onTurnAudio?.(audio);
       this.h.onTurnComplete?.();
     }
   }
@@ -533,6 +546,7 @@ export class LiveClient {
   teardown() {
     this.stopped = true;
     this.talking = false;
+    this.hold = false;
     for (const ws of [this.ws, this.next]) {
       if (ws) {
         ws.onclose = null;

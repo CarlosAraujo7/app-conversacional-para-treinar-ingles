@@ -95,18 +95,22 @@ export const TOPICS = [
 export const ACTIVITIES = {
   chat: {
     label: 'Conversa livre',
+    short: 'Livre',
     prompt: 'Free conversation: follow the learner\'s interests and keep it flowing.',
   },
   game: {
     label: 'Jogos e desafios',
+    short: 'Jogos',
     prompt: 'Play short, fun games, one at a time (two to four rounds, then switch): "Explain it like I\'m five" (the learner explains an optimization idea in simple English); "Guess the problem" (one of you describes a problem without naming it, the other guesses); "Two truths and a lie" about algorithms; "Use the new word" challenges; rapid-fire questions. Keep score playfully, and end each turn with the next challenge phrased as a question.',
   },
   quiz: {
     label: 'Quiz de vocabulário',
+    short: 'Quiz',
     prompt: 'Run a quick spoken quiz: review words from the learner\'s notebook (if any) and core optimization vocabulary. Ask "How do you say ... in English?" or "What does ... mean?", give feedback right away and keep an upbeat rhythm.',
   },
   debate: {
     label: 'Debate amigável',
+    short: 'Debate',
     prompt: 'Have a friendly debate: take a side playfully (exact methods versus heuristics, MIP versus CP, "is NP-hard really that scary?"), make the learner defend their position in English, concede good points graciously, and end each turn with a challenging question.',
   },
 };
@@ -153,6 +157,11 @@ export const PATIENCE = {
   patient: { label: 'Paciente (espera eu pensar)', vad: { endOfSpeechSensitivity: 'END_SENSITIVITY_LOW', silenceDurationMs: 1600 } },
 };
 
+// Aparência e meta de estudo (não mudam o que o Sam diz, então não pedem reiniciar a conexão).
+export const THEMES = { auto: { label: 'Igual ao sistema' }, light: { label: 'Claro' }, dark: { label: 'Escuro' } };
+export const TEXT_SIZES = { m: { label: 'Normal' }, l: { label: 'Grande' }, xl: { label: 'Muito grande' } };
+export const GOALS = { 5: { label: '5 min por dia' }, 10: { label: '10 min por dia' }, 15: { label: '15 min por dia' }, 20: { label: '20 min por dia' }, 30: { label: '30 min por dia' } };
+
 export const DEFAULT_SETTINGS = {
   apiKey: '',
   model: MODELS[0],
@@ -171,6 +180,11 @@ export const DEFAULT_SETTINGS = {
   speakerMode: false,
   longSession: true,
   affective: false, // experimental: nem todo modelo Live aceita
+  feedback: true, // cartão de correção embaixo das minhas frases
+  theme: 'auto', // 'auto' (sistema) | 'light' | 'dark'
+  textSize: 'm', // 'm' | 'l' | 'xl'
+  goalMin: '10', // meta diária de conversa, em minutos
+  reviewDir: 'pt-en', // revisão do caderno: 'pt-en' (lembrar o inglês) | 'en-pt' (lembrar o significado)
 };
 
 export function findTopic(id) {
